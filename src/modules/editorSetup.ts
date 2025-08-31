@@ -1,0 +1,156 @@
+// editorSetup.ts - GrapesJS editor setup and configuration
+
+import { PLACE_TAG, HBS_ATTR } from './types';
+import { setComponentText } from './utils';
+import { openExplorerModal } from './dataExplorer';
+
+/**
+ * Setup HBS token component type
+ */
+export const setupHbsTokenComponent = (editor: any) => {
+  // Component type for our token placeholder (locks accidental edits)
+  editor.DomComponents.addType('hbs-token', {
+    isComponent: (el: HTMLElement) => el.tagName === PLACE_TAG.toUpperCase() && el.hasAttribute(HBS_ATTR),
+    model: {
+      defaults: {
+        tagName: PLACE_TAG,
+        droppable: false,
+        draggable: true,
+        copyable: true,
+        traits: [
+          { label: 'Handlebars', name: HBS_ATTR, type: 'text', changeProp: true },
+        ],
+        attributes: { class: 'hbs-token' },
+      },
+    },
+  });
+
+  // Interpret our placeholders as the above type
+  editor.Parser.getConfig().compTypes?.unshift({
+    id: 'hbs-token',
+    isComponent: (el: HTMLElement) =>
+      el.tagName === PLACE_TAG.toUpperCase() && el.hasAttribute(HBS_ATTR),
+    model: { type: 'hbs-token' },
+  });
+};
+
+/**
+ * Setup basic blocks
+ */
+export const setupBlocks = (editor: any) => {
+  // Section block
+  editor.BlockManager.add("section", {
+    label: "Section",
+    category: "Basic",
+    attributes: { class: "fa fa-square" },
+    content: {
+      type: "section",
+      components: [
+        {
+          type: "text",
+          content: "Section content here...",
+        },
+      ],
+      style: {
+        padding: "20px",
+        border: "1px dashed #aaa",
+        margin: "10px 0",
+      },
+    },
+  });
+
+  // Variable block
+  editor.BlockManager.add('hbs-var', {
+    label: 'Variable',
+    category: 'Logic',
+    content: `<${PLACE_TAG} ${HBS_ATTR}="{{}}" class="hbs-token">{{}}</${PLACE_TAG}>`,
+  });
+};
+
+/**
+ * Setup token binding functionality
+ */
+export const setupTokenBinding = (editor: any, dataSources: any) => {
+  // Utility to set hbs attribute and visible inner text on the component element
+  const setTokenBinding = (component: any, path: string, previewValue: any) => {
+    const hbsExpr = `{{${path}}}`;
+    component.addAttributes({
+      [HBS_ATTR]: hbsExpr,
+      'data-hbs-processed': '1',
+      'data-source': path.split('.')[0],
+    });
+
+    // Update the model content so GrapesJS View Code shows the preview text,
+    // not the original `{{}}` placeholder.
+    const textToShow = (previewValue !== undefined && previewValue !== null) ? String(previewValue) : hbsExpr;
+    setComponentText(component, textToShow);
+
+    // (Optional) also update the live element for immediate visual feedback
+    const el = component.getEl?.();
+    if (el) {
+      el.setAttribute(HBS_ATTR, hbsExpr);
+      el.textContent = textToShow;
+    }
+  };
+
+  const openVariableModal = (component: any) => {
+    openExplorerModal({
+      editor,
+      root: dataSources,
+      mode: 'variable',
+      onConfirm: (path, ctx) => {
+        setTokenBinding(component, path, ctx.preview);
+      },
+    });
+  };
+
+  return { setTokenBinding, openVariableModal };
+};
+
+/**
+ * Setup usage highlighting
+ */
+export const setupUsageHighlighting = (editor: any) => {
+  const addUsageStyles = () => {
+    const doc = editor.Canvas.getDocument();
+    if (!doc) return;
+    const id = 'hbs-usage-style';
+    if (doc.getElementById(id)) return;
+    const style = doc.createElement('style');
+    style.id = id;
+    style.innerHTML = `
+      .hbs-token { outline-offset: 1px; }
+      .hbs-token.hbs-token--active { outline: 2px solid #0b74de; background: rgba(11,116,222,0.08); }
+      .hbs-token.hbs-token--same { outline: 2px dashed #60a5fa; background: rgba(59,130,246,0.08); }
+    `;
+    doc.head.appendChild(style);
+  };
+
+  const clearUsageHighlights = () => {
+    const doc = editor.Canvas.getDocument();
+    if (!doc) return;
+    doc.querySelectorAll('.hbs-token--active,.hbs-token--same').forEach((el:any) => {
+      el.classList.remove('hbs-token--active');
+      el.classList.remove('hbs-token--same');
+    });
+  };
+
+  const highlightUsages = (raw: string, el?: HTMLElement | null) => {
+    const doc = editor.Canvas.getDocument();
+    if (!doc) return;
+    clearUsageHighlights();
+    // Active element
+    if (el) el.classList.add('hbs-token--active');
+    // Same variable usages
+    if (raw) {
+      const same = doc.querySelectorAll(`[${HBS_ATTR}="${raw}"]`) as NodeListOf<HTMLElement>;
+      same.forEach(node => {
+        if (node !== el) node.classList.add('hbs-token--same');
+      });
+    }
+  };
+
+  addUsageStyles();
+
+  return { clearUsageHighlights, highlightUsages };
+};

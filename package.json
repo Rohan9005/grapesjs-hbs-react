@@ -1,0 +1,34 @@
+{
+  "name": "grapesjs-hbs-react",
+  "version": "1.0.0",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs", 
+  "types": "dist/index.d.ts",    
+  "scripts": {
+    "build": "tsup"
+  },
+  "keywords": ["grapesjs", "react", "handlebars", "editor"],
+  "author": "",
+  "license": "ISC",
+  "description": "React wrapper for GrapesJS with Handlebars integration",
+  "peerDependencies": {
+    "grapesjs": "^0.22.12",
+    "grapesjs-blocks-basic": "^1.0.2",
+    "grapesjs-preset-webpage": "^1.0.3",
+    "handlebars": "^4.7.8",
+    "react": ">=17",
+    "react-dom": ">=17"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "grapesjs": "^0.22.12",
+    "grapesjs-blocks-basic": "^1.0.2",
+    "grapesjs-preset-webpage": "^1.0.3",
+    "handlebars": "^4.7.8",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2019",                   // modern JS output
+    "module": "ESNext",                   // needed for bundlers like tsup
+    "jsx": "react-jsx",                   // 👈 enables React 17+/18+ JSX transform
+    "declaration": true,                  // generate .d.ts type files
+    "declarationDir": "dist/types",       // put all types in dist/types
+    "outDir": "dist",                     // tsup will output to dist
+    "strict": true,                       // enable strict type checking
+    "esModuleInterop": true,              // allow default imports for CJS modules
+    "moduleResolution": "bundler",           // resolves imports correctly
+    "resolveJsonModule": true,            // allow importing JSON if needed
+    "skipLibCheck": true                  // faster builds, skip type checks for deps
+  },
+  "include": ["src"],                     // only include your source
+  "exclude": ["node_modules", "dist"]     // don’t include output or deps
+}
