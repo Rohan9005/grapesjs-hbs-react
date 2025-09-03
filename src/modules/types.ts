@@ -4,7 +4,7 @@ export type TemplateEditorProps = {
   initialHbs?: string;          // load an existing .hbs
   sampleData?: any;             // for preview/rendering
   variables?: string[];         // optional list for future use
-  onExport?: (hbs: string) => void;
+  onChange?: (hbs: string) => void;
   dataSources?: Record<string, any>; // keys rendered as cards in modal
 };
 

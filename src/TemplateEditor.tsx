@@ -10,12 +10,13 @@ import type { TemplateEditorProps } from './modules/types';
 import { hbsToHtml } from './modules/handlebarsAdapter';
 import { setupHbsTokenComponent, setupBlocks, setupTokenBinding, setupUsageHighlighting } from './modules/editorSetup';
 import { setupComponentAddHandler, setupDoubleClickHandler, setupSelectionHandler } from './modules/eventHandlers';
-import { exportHbs, preview } from './modules/exportUtils';
+import { exportHbs } from './modules/exportUtils';
+import { debounce } from 'lodash';
 
 export default function TemplateEditor({
   initialHbs = '<div>{{title}}</div>',
   sampleData = { title: 'Hello' },
-  onExport,
+  onChange,
   dataSources = {},
 }: TemplateEditorProps) {
   const editorRef = useRef<any>(null);
@@ -52,23 +53,16 @@ export default function TemplateEditor({
     setupDoubleClickHandler(editor, openVariableModal);
     setupSelectionHandler(editor, openVariableModal, clearUsageHighlights, highlightUsages);
 
+    const updateContent = debounce(() => {
+      exportHbs(editor, onChange);
+    }, 500);
+    editor.on('update', updateContent);
+
     return () => editor.destroy();
   }, []);
 
-  const handleExport = () => {
-    exportHbs(editorRef.current, onExport);
-  };
-
-  const handlePreview = () => {
-    preview(editorRef.current, sampleData);
-  };
-
   return (
-    <div style={{ width: '100%', height: '80vh' }}>
-      <div className="flex gap-2" style={{ marginBottom: 8 }}>
-        <button onClick={handleExport} className="px-3 py-1 rounded bg-gray-200">Export .hbs</button>
-        <button onClick={handlePreview} className="px-3 py-1 rounded bg-gray-200">Preview</button>
-      </div>
+    <div style={{ width: '100%', height: '100vh' }}>
       <div ref={containerRef} className="border rounded" />
       {!editorReady && <div>Loading editor…</div>}
     </div>

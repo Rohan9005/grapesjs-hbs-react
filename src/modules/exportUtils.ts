@@ -6,12 +6,12 @@ import { htmlToHbs } from './handlebarsAdapter';
 /**
  * Export HBS template
  */
-export const exportHbs = (editor: any, onExport?: (hbs: string) => void) => {
+export const exportHbs = (editor: any, onChange?: (hbs: string) => void) => {
   const html = editor?.getHtml() || '';
   const css = editor?.getCss() || '';
   const merged = css ? `<style>${css}</style>${html}` : html;
   const hbs = htmlToHbs(merged);
-  onExport?.(hbs);
+  onChange?.(hbs);
 };
 
 /**

@@ -46,7 +46,7 @@ function App() {
         initialHbs={handlebarCode}
         sampleData={handlebarJSON}
         dataSources={handlebarJSON}
-        onExport={(hbs) => console.log("Exported HBS:", hbs)}
+        onChange={(hbs) => console.log("Exported HBS:", hbs)}
       />
     </div>
   );
