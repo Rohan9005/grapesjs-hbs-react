@@ -181,7 +181,7 @@ export const openExplorerModal = (opts: ExplorerModalOptions) => {
     const btnCancel = document.getElementById('gjs-modal-cancel');
     const btnOk = document.getElementById('gjs-modal-ok');
 
-    btnCancel?.addEventListener('click', () => editor.closeModal());
+    btnCancel?.addEventListener('click', () => editor.Modal.close());
     btnOk?.addEventListener('click', () => {
       if (!selectedPath) {
         alert('Please select a value');
@@ -198,7 +198,7 @@ export const openExplorerModal = (opts: ExplorerModalOptions) => {
       }
 
       onConfirm(selectedPath, { preview, selectedKind, range: Object.keys(range).length ? range : undefined });
-      editor.closeModal();
+      editor.Modal.close();
     });
   }, 50);
 };
