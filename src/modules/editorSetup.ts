@@ -20,7 +20,7 @@ export const setupHbsTokenComponent = (editor: any) => {
         traits: [
           { label: 'Handlebars', name: HBS_ATTR, type: 'text', changeProp: true },
         ],
-        attributes: { class: 'hbs-token' },
+        attributes: { class: 'hbs-token'},
       },
     },
   });
@@ -38,8 +38,11 @@ export const setupHbsTokenComponent = (editor: any) => {
  * Setup basic blocks
  */
 export const setupBlocks = (editor: any) => {
+  // Block Manager
+  const blockManager = editor.BlockManager;
+
   // Section block
-  editor.BlockManager.add("section", {
+  blockManager.add("section", {
     label: "Section",
     category: "Basic",
     attributes: { class: "fa fa-square" },
@@ -59,10 +62,35 @@ export const setupBlocks = (editor: any) => {
     },
   });
 
+  // H1 Block
+  blockManager.add("h1-block", {
+    label: "H1",
+    category: "Basic",
+    attributes: { class: "fa fa-header" },
+    content: `<h1 style="font-size:2em; font-weight:bold;">Heading 1</h1>`,
+  });
+
+  // H2 Block
+  blockManager.add("h2-block", {
+    label: "H2",
+    category: "Basic",
+    attributes: { class: "fa fa-header" },
+    content: `<h2 style="font-size:1.5em; font-weight:bold;">Heading 2</h2>`,
+  });
+
+  // H3 Block
+  blockManager.add("h3-block", {
+    label: "H3",
+    category: "Basic",
+    attributes: { class: "fa fa-header" },
+    content: `<h3 style="font-size:1.2em; font-weight:bold;">Heading 3</h3>`,
+  });
+
   // Variable block
-  editor.BlockManager.add('hbs-var', {
+  blockManager.add('hbs-var', {
     label: 'Variable',
     category: 'Logic',
+    attributes: { class: "fa fa-database" },
     content: `<${PLACE_TAG} ${HBS_ATTR}="{{}}" class="hbs-token">{{}}</${PLACE_TAG}>`,
   });
 };
@@ -129,7 +157,7 @@ export const setupUsageHighlighting = (editor: any) => {
   const clearUsageHighlights = () => {
     const doc = editor.Canvas.getDocument();
     if (!doc) return;
-    doc.querySelectorAll('.hbs-token--active,.hbs-token--same').forEach((el:any) => {
+    doc.querySelectorAll('.hbs-token--active,.hbs-token--same').forEach((el: any) => {
       el.classList.remove('hbs-token--active');
       el.classList.remove('hbs-token--same');
     });

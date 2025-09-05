@@ -35,6 +35,9 @@ export default function TemplateEditor({
     });
 
     editorRef.current = editor;
+
+    // Open Blocks panel by default
+    editor.Panels.getButton("views", "open-blocks")?.set("active", true);
     setEditorReady(true);
 
     // Load initial HBS
