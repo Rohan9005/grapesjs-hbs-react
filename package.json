@@ -1,6 +1,6 @@
 {
   "name": "grapesjs-hbs-react",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -19,7 +19,6 @@
   "peerDependencies": {
     "grapesjs": "^0.22.12",
     "grapesjs-blocks-basic": "^1.0.2",
-    "grapesjs-preset-webpage": "^1.0.3",
     "handlebars": "^4.7.8",
     "lodash": "^4.17.21",
     "react": ">=17",
@@ -31,7 +30,6 @@
     "@types/react-dom": "^19.1.9",
     "grapesjs": "^0.22.12",
     "grapesjs-blocks-basic": "^1.0.2",
-    "grapesjs-preset-webpage": "^1.0.3",
     "handlebars": "^4.7.8",
     "lodash": "^4.17.21",
     "react": "^19.1.1",

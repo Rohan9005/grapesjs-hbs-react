@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from 'react';
 import grapesjs from 'grapesjs';
 import 'grapesjs/dist/css/grapes.min.css';
-import presetWebpage from 'grapesjs-preset-webpage';
 import gjsBlockBasic from 'grapesjs-blocks-basic';
 
 // Import modules
@@ -31,8 +30,38 @@ export default function TemplateEditor({
       fromElement: false,
       height: '100%',
       storageManager: false, // you control save/load
-      plugins: [presetWebpage, gjsBlockBasic],
+      plugins: [gjsBlockBasic],
     });
+
+    let cssString = `
+            /* Theming */
+
+        /* Primary color for the background */
+        .gjs-one-bg {
+          background-color: #ffff;
+        }
+
+        /* Secondary color for the text color */
+        .gjs-two-color {
+          color: #161676;
+        }
+
+        /* Tertiary color for the background */
+        .gjs-three-bg {
+          background-color: #7c7cae;
+          color: white;
+        }
+
+        /* Quaternary color for the text color */
+        .gjs-four-color,
+        .gjs-four-color-h:hover {
+          color: #2a2aa1;
+        }
+    `
+
+    const style = document.createElement('style');
+    style.innerText = cssString;
+    document.head.appendChild(style);
 
     editorRef.current = editor;
 
