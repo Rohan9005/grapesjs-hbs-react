@@ -17,6 +17,7 @@ export default function TemplateEditor({
   sampleData = { title: 'Hello' },
   onChange,
   dataSources = {},
+  onEditor,
 }: TemplateEditorProps) {
   const editorRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -65,6 +66,9 @@ export default function TemplateEditor({
 
     editorRef.current = editor;
 
+    // expose editor to parent
+    if (onEditor) onEditor(editor);
+
     // Open Blocks panel by default
     editor.Panels.getButton("views", "open-blocks")?.set("active", true);
     setEditorReady(true);
@@ -76,7 +80,7 @@ export default function TemplateEditor({
     // Setup editor components and functionality
     setupHbsTokenComponent(editor);
     setupBlocks(editor);
-    
+
     const { openVariableModal } = setupTokenBinding(editor, dataSources);
     const { clearUsageHighlights, highlightUsages } = setupUsageHighlighting(editor);
 
