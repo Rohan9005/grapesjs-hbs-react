@@ -44,7 +44,6 @@ function App() {
     <div style={{ height: 600, width: "100%", border: "1px solid #ddd" }}>
       <TemplateEditor
         initialHbs={handlebarCode}
-        sampleData={handlebarJSON}
         dataSources={handlebarJSON}
         onChange={(hbs) => console.log("Exported HBS:", hbs)}
       />

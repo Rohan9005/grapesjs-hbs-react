@@ -1,6 +1,6 @@
 // TemplateEditor.tsx - Main component using modular structure
 import { useEffect, useRef, useState } from 'react';
-import grapesjs from 'grapesjs';
+import grapesjs, { Editor } from 'grapesjs';
 import 'grapesjs/dist/css/grapes.min.css';
 import gjsBlockBasic from 'grapesjs-blocks-basic';
 
@@ -14,18 +14,42 @@ import { debounce } from 'lodash';
 
 export default function TemplateEditor({
   initialHbs = '<div>{{title}}</div>',
-  sampleData = { title: 'Hello' },
   onChange,
-  dataSources = {},
-  onEditor,
+  dataSources = { title: 'Hello' },
 }: TemplateEditorProps) {
   const editorRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [editorReady, setEditorReady] = useState(false);
 
-  useEffect(() => {
-    if (!containerRef.current) return;
+  function setupEventHandler(editor: Editor, dataSources: any) {
+    const { openVariableModal } = setupTokenBinding(editor, dataSources);
+    const { clearUsageHighlights, highlightUsages } = setupUsageHighlighting(editor);
 
+    // Setup event handlers
+    setupComponentAddHandler(editor, openVariableModal);
+    setupDoubleClickHandler(editor, openVariableModal);
+    setupSelectionHandler(editor, openVariableModal, clearUsageHighlights, highlightUsages);
+  }
+
+  useEffect(() => {
+    if (!editorReady) return;   // ✅ prevent running too early
+    if (!editorRef.current) return;
+    if (!initialHbs) return;
+
+    console.log("[REACT-PACKAGE] - Template Reloaded", { initialHbs, dataSources });
+
+    const editor = editorRef.current;
+    const initialHtml = hbsToHtml(initialHbs, dataSources);
+    editor.setComponents(initialHtml);
+    setupEventHandler(editor, dataSources);
+
+    console.log("[REACT-PACKAGE] - Template Loading Completed",);
+  }, [editorReady, initialHbs, dataSources])
+
+  useEffect(() => {
+    console.log("[REACT-PACKAGE] - Editor Initilization Started");
+    
+    if (!containerRef.current) return;
     const editor = grapesjs.init({
       container: containerRef.current,
       fromElement: false,
@@ -66,33 +90,27 @@ export default function TemplateEditor({
 
     editorRef.current = editor;
 
-    // expose editor to parent
-    if (onEditor) onEditor(editor);
-
     // Open Blocks panel by default
     editor.Panels.getButton("views", "open-blocks")?.set("active", true);
     setEditorReady(true);
 
     // Load initial HBS
-    const initialHtml = hbsToHtml(initialHbs, sampleData);
+    if (!initialHbs) return;
+    const initialHtml = hbsToHtml(initialHbs, dataSources);
     editor.setComponents(initialHtml);
 
     // Setup editor components and functionality
     setupHbsTokenComponent(editor);
     setupBlocks(editor);
 
-    const { openVariableModal } = setupTokenBinding(editor, dataSources);
-    const { clearUsageHighlights, highlightUsages } = setupUsageHighlighting(editor);
-
-    // Setup event handlers
-    setupComponentAddHandler(editor, openVariableModal);
-    setupDoubleClickHandler(editor, openVariableModal);
-    setupSelectionHandler(editor, openVariableModal, clearUsageHighlights, highlightUsages);
+    setupEventHandler(editor, dataSources);
 
     const updateContent = debounce(() => {
       exportHbs(editor, onChange);
     }, 500);
     editor.on('update', updateContent);
+
+    console.log("[REACT-PACKAGE] - Editor Initilization Completed");
 
     return () => editor.destroy();
   }, []);

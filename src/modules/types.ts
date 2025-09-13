@@ -1,14 +1,11 @@
 // types.ts - Shared types and interfaces
 import { Editor } from "grapesjs";
 
-export type TemplateEditorProps = {
-  onEditor?: (editor: Editor) => void 
-  initialHbs?: string;          // load an existing .hbs
-  sampleData?: any;             // for preview/rendering
-  variables?: string[];         // optional list for future use
+export interface TemplateEditorProps {
+  initialHbs?: string;
   onChange?: (hbs: string) => void;
-  dataSources?: Record<string, any>; // keys rendered as cards in modal
-};
+  dataSources?: Record<string, any>;
+}
 
 export type DataType = 'null' | 'array' | 'object' | 'string' | 'number' | 'boolean' | 'undefined';
 
