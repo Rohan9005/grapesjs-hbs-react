@@ -61,8 +61,6 @@ export const openExplorerModal = (opts: ExplorerModalOptions) => {
   // State
   let currentPath = startPath;
   let currentNode = currentPath ? getValueFromPath(root, currentPath) : root;
-  //const selection = { path: null as string | null, kind: '' as string };
-  // Use variables that can be properly updated
   let selectedPath: string | null = null;
   let selectedKind: string = '';
 
@@ -104,8 +102,8 @@ export const openExplorerModal = (opts: ExplorerModalOptions) => {
       .concat(
         parts.map((p) => {
           acc.push(p);
-          return `<span style=\"margin:0 6px;color:#9ca3af\">/</span>
-                  <span data-jump=\"${escapeHtml(acc.join('.'))}\" style=\"cursor:pointer;color:#0b74de\">${escapeHtml(p)}</span>`;
+          return `<span style="margin:0 6px;color:#9ca3af">/</span>
+                  <span data-jump="${escapeHtml(acc.join('.'))}" style="cursor:pointer;color:#0b74de">${escapeHtml(p)}</span>`;
         })
       )
       .join('');
@@ -137,59 +135,52 @@ export const openExplorerModal = (opts: ExplorerModalOptions) => {
     }
   };
 
-  const attachCardHandlers = () => {
-    const explorer = document.getElementById('gjs-explorer');
-    if (!explorer) return;
-    explorer.querySelectorAll<HTMLElement>('.gjs-card').forEach((card) => {
-      card.addEventListener('click', () => {
-        console.log('card clicked');
-        const path = card.getAttribute('data-path')!;
-        const kind = card.getAttribute('data-kind')!;
-        console.log('path', path);
-        console.log('kind', kind);
-        const val = getValueFromPath(root, path);
-        if (kind === 'object' || kind === 'array') {
-          currentPath = path;
-          currentNode = val;
-          selectedPath = null; // Clear selection
-          selectedKind = '';
-          console.log('Selection path in If', selectedPath);
-          updatePreview();
-          rerender();
-        } else {
-          selectedPath = path;
-          selectedKind = kind;
-          console.log('Selection path in else', selectedPath);
-          updatePreview();
-          explorer.querySelectorAll<HTMLElement>('.gjs-card').forEach((el) => (el.style.outline = ''));
-          card.style.outline = '2px solid #0b74de';
-        }
-      });
-    });
+  // Event handlers using event delegation
+  const handleCardClick = (event: Event) => {
+    const target = event.target as HTMLElement;
+    const card = target.closest('.gjs-card') as HTMLElement;
+    if (!card) return;
+
+    const path = card.getAttribute('data-path')!;
+    const kind = card.getAttribute('data-kind')!;
+    const val = getValueFromPath(root, path);
+
+    if (kind === 'object' || kind === 'array') {
+      // Navigate into object/array
+      currentPath = path;
+      currentNode = val;
+      selectedPath = null; // Clear selection
+      selectedKind = '';
+      
+      // Update UI without re-attaching handlers
+      renderBreadcrumb();
+      renderExplorer();
+      updatePreview();
+    } else {
+      // Select a value
+      selectedPath = path;
+      selectedKind = kind;
+      
+      // Update UI and highlight selection
+      updatePreview();
+      document.querySelectorAll<HTMLElement>('.gjs-card').forEach((el) => (el.style.outline = ''));
+      card.style.outline = '2px solid #0b74de';
+    }
   };
 
-  const attachBreadcrumbHandlers = () => {
-    const breadcrumb = document.getElementById('gjs-breadcrumb');
-    if (!breadcrumb) return;
-    breadcrumb.querySelectorAll<HTMLElement>('[data-jump]').forEach((el) => {
-      el.addEventListener('click', () => {
-        const jump = el.getAttribute('data-jump') || '';
-        currentPath = jump;
-        currentNode = jump ? getValueFromPath(root, jump) : root;
-        selectedPath = null;
-        selectedKind = '';
-        console.log("(attachBreadcrumbHandlers) setting selection.path to null");
-        updatePreview();
-        rerender();
-      });
-    });
-  };
+  const handleBreadcrumbClick = (event: Event) => {
+    const target = event.target as HTMLElement;
+    if (!target.hasAttribute('data-jump')) return;
 
-  const rerender = () => {
+    const jump = target.getAttribute('data-jump') || '';
+    currentPath = jump;
+    currentNode = jump ? getValueFromPath(root, jump) : root;
+    selectedPath = null;
+    selectedKind = '';
+    
+    // Update UI without re-attaching handlers
     renderBreadcrumb();
     renderExplorer();
-    attachCardHandlers();
-    attachBreadcrumbHandlers();
     updatePreview();
   };
 
@@ -210,7 +201,6 @@ export const openExplorerModal = (opts: ExplorerModalOptions) => {
       if (fromEl?.value) range.from = Number(fromEl.value);
       if (toEl?.value) range.to = Number(toEl.value);
     }
-    // First return the selected path; value is available via preview in context
     onConfirm(selectedPath, { preview, selectedKind: selectedKind, range: Object.keys(range).length ? range : undefined });
     editor.Modal.close();
   };
@@ -219,13 +209,27 @@ export const openExplorerModal = (opts: ExplorerModalOptions) => {
   editor.Modal.setTitle('Select data').setContent(buildContainer()).open();
 
   setTimeout(() => {
-    rerender();
+    // Initial render
+    renderBreadcrumb();
+    renderExplorer();
+    updatePreview();
+
+    // Wire button handlers (only once)
     const btnCancel = document.getElementById('gjs-modal-cancel');
     const btnOk = document.getElementById('gjs-modal-ok');
     btnCancel?.addEventListener('click', handleCancel);
-    btnOk?.addEventListener('click', () => {
-      handleOk();
-    });
-  }, 500);
+    btnOk?.addEventListener('click', handleOk);
+
+    // Wire event delegation (only once)
+    const explorer = document.getElementById('gjs-explorer');
+    const breadcrumb = document.getElementById('gjs-breadcrumb');
+    
+    if (explorer) {
+      explorer.addEventListener('click', handleCardClick);
+    }
+    if (breadcrumb) {
+      breadcrumb.addEventListener('click', handleBreadcrumbClick);
+    }
+  }, 50);
 };
 

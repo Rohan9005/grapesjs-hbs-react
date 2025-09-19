@@ -20,6 +20,7 @@ export default function TemplateEditor({
   const editorRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [editorReady, setEditorReady] = useState(false);
+  const lastAppliedHbsRef = useRef<string | null>(null);
 
   function setupEventHandler(editor: Editor, dataSources: any) {
     const { openVariableModal } = setupTokenBinding(editor, dataSources);
@@ -32,23 +33,29 @@ export default function TemplateEditor({
   }
 
   useEffect(() => {
-    if (!editorReady) return;   // ✅ prevent running too early
-    if (!editorRef.current) return;
+    if (!editorReady || !editorRef.current) return;
     if (!initialHbs) return;
-
-    console.log("[REACT-PACKAGE] - Template Reloaded", { initialHbs, dataSources });
-
+  
+    // Skip if HBS hasn't actually changed
+    if (lastAppliedHbsRef.current === initialHbs) return;
+  
     const editor = editorRef.current;
-    const initialHtml = hbsToHtml(initialHbs, dataSources);
-    editor.setComponents(initialHtml);
+    const newHtml = hbsToHtml(initialHbs, dataSources);
+  
+    console.log("[REACT-PACKAGE] - Template Reloaded", { initialHbs, dataSources });
+  
+    editor.setComponents(newHtml);
     setupEventHandler(editor, dataSources);
+  
+    lastAppliedHbsRef.current = initialHbs;
+  
+    console.log("[REACT-PACKAGE] - Template Loading Completed");
+  }, [editorReady, initialHbs, dataSources]);
 
-    console.log("[REACT-PACKAGE] - Template Loading Completed",);
-  }, [editorReady, initialHbs, dataSources])
 
   useEffect(() => {
     console.log("[REACT-PACKAGE] - Editor Initilization Started");
-    
+
     if (!containerRef.current) return;
     const editor = grapesjs.init({
       container: containerRef.current,
@@ -106,9 +113,17 @@ export default function TemplateEditor({
     setupEventHandler(editor, dataSources);
 
     const updateContent = debounce(() => {
-      exportHbs(editor, onChange);
+      const newHbs = exportHbs(editor, onChange);
+    
+      // Prevent feedback loop: only propagate if changed
+      if (lastAppliedHbsRef.current !== newHbs) {
+        lastAppliedHbsRef.current = newHbs;
+        onChange?.(newHbs);
+      }
     }, 500);
+    
     editor.on('update', updateContent);
+    
 
     console.log("[REACT-PACKAGE] - Editor Initilization Completed");
 
