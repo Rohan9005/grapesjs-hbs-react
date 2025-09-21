@@ -35,22 +35,33 @@ export default function TemplateEditor({
   useEffect(() => {
     if (!editorReady || !editorRef.current) return;
     if (!initialHbs) return;
-  
+
     // Skip if HBS hasn't actually changed
     if (lastAppliedHbsRef.current === initialHbs) return;
-  
+
     const editor = editorRef.current;
     const newHtml = hbsToHtml(initialHbs, dataSources);
-  
+
     console.log("[REACT-PACKAGE] - Template Reloaded", { initialHbs, dataSources });
-  
+
     editor.setComponents(newHtml);
     setupEventHandler(editor, dataSources);
-  
+
     lastAppliedHbsRef.current = initialHbs;
-  
+
     console.log("[REACT-PACKAGE] - Template Loading Completed");
   }, [editorReady, initialHbs, dataSources]);
+
+  // 🔹 Effect: only update bindings when dataSources change
+  useEffect(() => {
+    if (!editorReady || !editorRef.current) return;
+
+    const editor = editorRef.current;
+    console.log("[REACT-PACKAGE] - DataSources Updated", dataSources);
+
+    // Re-run token binding logic without resetting components
+    setupEventHandler(editor, dataSources);
+  }, [editorReady, dataSources]);
 
 
   useEffect(() => {
@@ -114,16 +125,16 @@ export default function TemplateEditor({
 
     const updateContent = debounce(() => {
       const newHbs = exportHbs(editor, onChange);
-    
+
       // Prevent feedback loop: only propagate if changed
       if (lastAppliedHbsRef.current !== newHbs) {
         lastAppliedHbsRef.current = newHbs;
         onChange?.(newHbs);
       }
     }, 500);
-    
+
     editor.on('update', updateContent);
-    
+
 
     console.log("[REACT-PACKAGE] - Editor Initilization Completed");
 
