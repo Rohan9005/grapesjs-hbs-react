@@ -5,7 +5,11 @@ import { HBS_ATTR } from './types';
 /**
  * Setup component add event handler
  */
-export const setupComponentAddHandler = (editor: any, openVariableModal: (component: any) => void) => {
+export const setupComponentAddHandler = (
+  editor: any, 
+  openVariableModal: (component: any) => void,
+  openEachModal: (c: any) => void
+) => {
   // Listen for components being added to the canvas
   editor.on('component:add', (component: any) => {
     try {
@@ -15,11 +19,9 @@ export const setupComponentAddHandler = (editor: any, openVariableModal: (compon
         if (raw) {
           if (raw === '{{}}') return openVariableModal(comp);
           if (raw.startsWith('{{#if')) return;
-          if (raw.startsWith('{{#each')) return;
+          if (raw.startsWith('{{#each')) return openEachModal(comp);
         }
-        // children
-        const children = comp.components?.();
-        children?.forEach?.((c: any) => walk(c));
+        comp.components?.().forEach((c: any) => walk(c));
       };
       walk(component);
     } catch (err) {
@@ -31,7 +33,7 @@ export const setupComponentAddHandler = (editor: any, openVariableModal: (compon
 /**
  * Setup double click event handler
  */
-export const setupDoubleClickHandler = (editor: any, openVariableModal: (component: any) => void) => {
+export const setupDoubleClickHandler = (editor: any, openVariableModal: (component: any) => void, openEachModal: (component: any) => void) => {
   // Double click to remap any token
   editor.on('component:dblclick', (component: any) => {
     try {
@@ -39,7 +41,7 @@ export const setupDoubleClickHandler = (editor: any, openVariableModal: (compone
       const raw = attrs?.[HBS_ATTR] as string | undefined;
       if (!raw) return;
       if (raw.startsWith('{{#if')) return;
-      if (raw.startsWith('{{#each')) return;
+      if (raw.startsWith('{{#each')) return openEachModal(component);
       return openVariableModal(component);
     } catch { }
   });

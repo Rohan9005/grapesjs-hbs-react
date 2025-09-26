@@ -23,12 +23,12 @@ export default function TemplateEditor({
   const lastAppliedHbsRef = useRef<string | null>(null);
 
   function setupEventHandler(editor: Editor, dataSources: any) {
-    const { openVariableModal } = setupTokenBinding(editor, dataSources);
+    const { openVariableModal, openEachModal } = setupTokenBinding(editor, dataSources);
     const { clearUsageHighlights, highlightUsages } = setupUsageHighlighting(editor);
 
     // Setup event handlers
-    setupComponentAddHandler(editor, openVariableModal);
-    setupDoubleClickHandler(editor, openVariableModal);
+    setupComponentAddHandler(editor, openVariableModal, openEachModal);
+    setupDoubleClickHandler(editor, openVariableModal, openEachModal);
     setupSelectionHandler(editor, openVariableModal, clearUsageHighlights, highlightUsages);
   }
 

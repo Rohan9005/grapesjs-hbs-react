@@ -8,12 +8,10 @@ import { PLACE_TAG, HBS_ATTR } from './types';
  * This version preserves {{#each}} and {{#if}} blocks while converting simple variables to tokens
  */
 export const hbsToHtml = (hbs: string, sampleData: any) => {
-  // clone a fresh instance so we don't double-register helpers
   const hb = Handlebars.create();
 
-  // register a fallback helper for any unknown variable
+  // fallback for variables
   hb.registerHelper("lookupVar", function (path: string, options: any) {
-    // resolve deep path manually
     const parts = path.split(".");
     let value: any = options.data.root;
     for (const p of parts) {
@@ -25,10 +23,10 @@ export const hbsToHtml = (hbs: string, sampleData: any) => {
     );
   });
 
-  // First, protect {{#each}} and {{#if}} blocks by temporarily replacing them
+  // ---- Protect blocks
   const protectedBlocks: string[] = [];
   let blockCounter = 0;
-  
+
   // Protect each blocks
   hbs = hbs.replace(/({{#each\s+[^}]+}}[\s\S]*?{{\/each}})/g, (match) => {
     const placeholder = `__PROTECTED_BLOCK_${blockCounter}__`;
@@ -45,18 +43,36 @@ export const hbsToHtml = (hbs: string, sampleData: any) => {
     return placeholder;
   });
 
-  // transform raw variables like {{company.name}} into {{lookupVar "company.name"}}
-  // but only if they're not inside protected blocks
-  const rewritten = hbs.replace(
-    /{{\s*([a-zA-Z0-9_.]+)\s*}}/g,
-    (_, expr) => `{{lookupVar "${expr}"}}`
-  );
+  // Rewrite variables
+  const rewritten = hbs.replace(/{{\s*([a-zA-Z0-9_.]+)\s*}}/g, (_, expr) => {
+    return `{{lookupVar "${expr}"}}`;
+  });
 
   // Restore protected blocks
   let result = rewritten;
   protectedBlocks.forEach((block, index) => {
     result = result.replace(`__PROTECTED_BLOCK_${index}__`, block);
   });
+
+  result = result.replace(
+    /{{#each\s+([a-zA-Z0-9_.]+)}}([\s\S]*?){{\/each}}/g,
+    (_, arrayName, inner) => {
+      const arr = sampleData[arrayName] || [];
+      let renderedItems = "";
+
+      let start = 0, end = arr.length - 1;
+      // If range metadata exists (data-hbs-range="0-2" or "all"), slice accordingly
+
+      arr.slice(start, end + 1).forEach((item: any, idx: number) => {
+        const tpl = hb.compile(inner);
+        const renderedInner = tpl(item);
+        renderedItems += `<div data-hbs-index="${idx}">${renderedInner}</div>`;
+      });
+
+      return `<div data-hbs-each="${arrayName}" data-hbs-range="${start}-${end}">${renderedItems}</div>`;
+    }
+  );
+
 
   const template = hb.compile(result);
   return template(sampleData);
@@ -69,25 +85,40 @@ export const htmlToHbs = (html: string) => {
   const container = document.createElement("div");
   container.innerHTML = html;
 
+  // Handle token placeholders
   container.querySelectorAll(`[${HBS_ATTR}]`).forEach((el) => {
     const hbsExpr = el.getAttribute(HBS_ATTR) || "";
     if (!hbsExpr) return;
 
-    // --- clean copy of innerHTML
     let inner = el.innerHTML;
 
-    // Strip GrapesJS helper attributes
     el.removeAttribute("data-hbs-processed");
     el.removeAttribute("data-source");
     el.removeAttribute("class");
 
-    // Replace element itself with its raw Handlebars code
     if (hbsExpr.startsWith("{{#if") || hbsExpr.startsWith("{{#each")) {
       el.outerHTML = `${hbsExpr}${inner}{{/${hbsExpr.split(" ")[0].replace("{{#", "")}}}`;
     } else {
       el.outerHTML = hbsExpr;
     }
   });
+
+  container.querySelectorAll("[data-hbs-each]").forEach((wrapper) => {
+    const arrayName = wrapper.getAttribute("data-hbs-each");
+    const range = wrapper.getAttribute("data-hbs-range");
+    if (!arrayName) return;
+  
+    const children = wrapper.querySelectorAll("[data-hbs-index]");
+  
+    let block = `{{#each ${arrayName}}}`;
+    children.forEach((child) => {
+      block += child.innerHTML;
+    });
+    block += `{{/each}}`;
+  
+    wrapper.outerHTML = block;
+  });
+  
 
   return container.innerHTML;
 };
