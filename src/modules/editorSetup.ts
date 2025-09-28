@@ -139,38 +139,38 @@ export const setupTokenBinding = (editor: any, dataSources: any) => {
     });
   };
 
-  const openEachModal = (component: any) => {
-    openExplorerModal({
-      editor,
-      root: dataSources,
-      mode: 'each',
-      onConfirm: (path, ctx) => {
-        const { preview } = ctx;
-  
-        const hbsExpr = `{{#each ${path}}}`;
-        const closing = `{{/each}}`;
-  
-        component.addAttributes({
-          [HBS_ATTR]: hbsExpr,
-          'data-hbs-processed': '1',
-          'data-hbs-each': path,
-        });
-  
-        // Build preview list — render ALL items
-        const arr = getValueFromPath(dataSources, path) || [];
-        const items = arr
-          .map(
-            (item: any, idx: number) =>
-              `<div data-hbs-index="${idx}">${escapeHtml(JSON.stringify(item))}</div>`
-          )
-          .join('');
-  
-        component.components(
-          `<div data-hbs-each="${path}">${items}</div>${closing}`
-        );
-      },
-    });
-  };
+    const openEachModal = (component: any) => {
+      openExplorerModal({
+        editor,
+        root: dataSources,
+        mode: 'each',
+        onConfirm: (path, ctx) => {
+          const { preview } = ctx;
+    
+          const hbsExpr = `{{#each ${path}}}`;
+          const closing = `{{/each}}`;
+    
+          component.addAttributes({
+            [HBS_ATTR]: hbsExpr,         // keep opening tag in hidden attr
+            'data-hbs-processed': '1',
+            'data-hbs-each': path,
+            'data-hbs-closing': closing, // keep closing tag in hidden attr
+          });
+    
+          // Render only preview items (no hbs tags visible to user)
+          const arr = getValueFromPath(dataSources, path) || [];
+          const items = arr
+            .map((item: any, idx: number) =>
+              `<div data-hbs-index="${idx}">${escapeHtml(
+                JSON.stringify(item)
+              )}</div>`
+            )
+            .join('');
+    
+          component.components(`<div data-hbs-each="${path}">${items}</div>`);
+        },
+      });
+    };  
 
   return { setTokenBinding, openVariableModal, openEachModal };
 };

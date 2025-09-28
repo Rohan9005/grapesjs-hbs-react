@@ -105,20 +105,21 @@ export const htmlToHbs = (html: string) => {
 
   container.querySelectorAll("[data-hbs-each]").forEach((wrapper) => {
     const arrayName = wrapper.getAttribute("data-hbs-each");
-    const range = wrapper.getAttribute("data-hbs-range");
+    const hbsExpr = wrapper.getAttribute(HBS_ATTR) || `{{#each ${arrayName}}}`;
+    const closing = wrapper.getAttribute("data-hbs-closing") || "{{/each}}";
     if (!arrayName) return;
   
     const children = wrapper.querySelectorAll("[data-hbs-index]");
+    let block = hbsExpr;
   
-    let block = `{{#each ${arrayName}}}`;
     children.forEach((child) => {
       block += child.innerHTML;
     });
-    block += `{{/each}}`;
+    block += closing;
   
     wrapper.outerHTML = block;
-  });
-  
+  });  
+
 
   return container.innerHTML;
 };
