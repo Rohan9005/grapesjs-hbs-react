@@ -14,6 +14,7 @@ export type ExplorerModalMode = 'variable' | 'each' | 'if';
 export type ExplorerModalContext = {
   preview: string;
   selectedKind: string;
+  range?: { from?: number; to?: number };
 };
 
 export type ExplorerModalOptions = {

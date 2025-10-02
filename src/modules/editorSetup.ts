@@ -1,7 +1,7 @@
 // editorSetup.ts - GrapesJS editor setup and configuration
 
 import { PLACE_TAG, HBS_ATTR } from './types';
-import { escapeHtml, setComponentText, getValueFromPath } from './utils';
+import { setComponentText } from './utils';
 import { openExplorerModal } from './dataExplorer';
 
 /**
@@ -93,13 +93,6 @@ export const setupBlocks = (editor: any) => {
     attributes: { class: "fa fa-database" },
     content: `<${PLACE_TAG} ${HBS_ATTR}="{{}}" class="hbs-token">{{}}</${PLACE_TAG}>`,
   });
-
-  blockManager.add('hbs-each', {
-    label: 'Each',
-    category: 'Logic',
-    attributes: { class: "fa fa-list" },
-    content: `<${PLACE_TAG} ${HBS_ATTR}="{{#each}}" class="hbs-token">{{#each}}{{/each}}</${PLACE_TAG}>`,
-  });
 };
 
 /**
@@ -139,40 +132,7 @@ export const setupTokenBinding = (editor: any, dataSources: any) => {
     });
   };
 
-    const openEachModal = (component: any) => {
-      openExplorerModal({
-        editor,
-        root: dataSources,
-        mode: 'each',
-        onConfirm: (path, ctx) => {
-          const { preview } = ctx;
-    
-          const hbsExpr = `{{#each ${path}}}`;
-          const closing = `{{/each}}`;
-    
-          component.addAttributes({
-            [HBS_ATTR]: hbsExpr,         // keep opening tag in hidden attr
-            'data-hbs-processed': '1',
-            'data-hbs-each': path,
-            'data-hbs-closing': closing, // keep closing tag in hidden attr
-          });
-    
-          // Render only preview items (no hbs tags visible to user)
-          const arr = getValueFromPath(dataSources, path) || [];
-          const items = arr
-            .map((item: any, idx: number) =>
-              `<div data-hbs-index="${idx}">${escapeHtml(
-                JSON.stringify(item)
-              )}</div>`
-            )
-            .join('');
-    
-          component.components(`<div data-hbs-each="${path}">${items}</div>`);
-        },
-      });
-    };  
-
-  return { setTokenBinding, openVariableModal, openEachModal };
+  return { setTokenBinding, openVariableModal };
 };
 
 /**
