@@ -42,14 +42,12 @@ export default function TemplateEditor({
     const editor = editorRef.current;
     const newHtml = hbsToHtml(initialHbs, dataSources);
 
-    console.log("[REACT-PACKAGE] - Template Reloaded", { initialHbs, dataSources });
 
     editor.setComponents(newHtml);
     setupEventHandler(editor, dataSources);
 
     lastAppliedHbsRef.current = initialHbs;
 
-    console.log("[REACT-PACKAGE] - Template Loading Completed");
   }, [editorReady, initialHbs, dataSources]);
 
   // 🔹 Effect: only update bindings when dataSources change
@@ -57,7 +55,6 @@ export default function TemplateEditor({
     if (!editorReady || !editorRef.current) return;
 
     const editor = editorRef.current;
-    console.log("[REACT-PACKAGE] - DataSources Updated", dataSources);
 
     // Re-run token binding logic without resetting components
     setupEventHandler(editor, dataSources);
@@ -65,7 +62,6 @@ export default function TemplateEditor({
 
 
   useEffect(() => {
-    console.log("[REACT-PACKAGE] - Editor Initilization Started");
 
     if (!containerRef.current) return;
     const editor = grapesjs.init({
@@ -115,7 +111,7 @@ export default function TemplateEditor({
     // Load initial HBS
     if (!initialHbs) return;
     const initialHtml = hbsToHtml(initialHbs, dataSources);
-    editor.setComponents(initialHtml);
+    editor.setComponents(initialHtml as string);
 
     // Setup editor components and functionality
     setupHbsTokenComponent(editor);
@@ -134,9 +130,6 @@ export default function TemplateEditor({
     }, 500);
 
     editor.on('update', updateContent);
-
-
-    console.log("[REACT-PACKAGE] - Editor Initilization Completed");
 
     return () => editor.destroy();
   }, []);

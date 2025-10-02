@@ -16,8 +16,8 @@ export const exportHbs = (
   const hbs = htmlToHbs(merged);
 
   // Call the callback
-  onChange?.(hbs);
+  onChange?.(hbs as string);
 
   // Return the HBS so caller can use it
-  return hbs;
+  return hbs as string;
 };
