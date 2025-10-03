@@ -28,7 +28,7 @@ export const hbsToHtml = (hbs: string, sampleData: any) => {
   // First, protect {{#each}} and {{#if}} blocks by temporarily replacing them
   const protectedBlocks: string[] = [];
   let blockCounter = 0;
-  
+
   // Protect each blocks
   hbs = hbs.replace(/({{#each\s+[^}]+}}[\s\S]*?{{\/each}})/g, (match) => {
     const placeholder = `__PROTECTED_BLOCK_${blockCounter}__`;
@@ -66,6 +66,19 @@ export const hbsToHtml = (hbs: string, sampleData: any) => {
  * Convert HTML with token placeholders back to Handlebars
  */
 export const htmlToHbs = (html: string) => {
+  // --- Protect void/self-closing tags BEFORE DOM parsing ---
+  const voidTags = ["br", "img", "hr", "input", "meta", "link"];
+  const placeholders: string[] = [];
+
+  voidTags.forEach((tag) => {
+    const regex = new RegExp(`<${tag}([^>]*)\\/?>`, "gi");
+    html = html.replace(regex, (match) => {
+      const placeholder = `__VOID_PLACEHOLDER_${placeholders.length}__`;
+      placeholders.push(match); // keep original <br/> or <img ... />
+      return placeholder;
+    });
+  });
+
   const container = document.createElement("div");
   container.innerHTML = html;
 
@@ -89,7 +102,13 @@ export const htmlToHbs = (html: string) => {
     }
   });
 
-  return container.innerHTML;
+  let finalResult = container.innerHTML;
+
+  placeholders.forEach((original, i) => {
+    finalResult = finalResult.replace(`__VOID_PLACEHOLDER_${i}__`, original);
+  });
+
+  return finalResult;
 };
 
 /**
