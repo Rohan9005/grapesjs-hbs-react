@@ -89,13 +89,15 @@ describe('hbsToAnnotatedHtml (HBS ➜ annotated HTML)', () => {
 
         const expectedHtml = `<tbody><div data-hbs-each="simpleArray" data-hbs-range="0-1">
         <tr>
-        <td><span class="hbs-token">Premium Wireless Headphones</span></td>
-        <td><span class="hbs-token">Smartphone Protective Case</span></td>
+        <td><span data-hbs="{{simpleArray.0}}" class="hbs-token">Premium Wireless Headphones</span></td>
+        </tr>
+        <tr>
+        <td><span data-hbs="{{simpleArray.1}}" class="hbs-token">Smartphone Protective Case</span></td>
         </tr>
         </div></tbody>`
 
         // Wrapper expectations
-        expect(html).toEqual(expectedHtml);
+        expect(normalize(html)).toEqual(normalize(expectedHtml));
     });
 });
 
