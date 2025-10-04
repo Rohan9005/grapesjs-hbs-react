@@ -1,11 +1,12 @@
 {
   "name": "grapesjs-hbs-react",
-  "version": "1.0.38",
+  "version": "1.0.45",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsup"
+    "build": "tsup",
+    "test": "jest"
   },
   "keywords": [
     "grapesjs",
@@ -25,16 +26,24 @@
     "react-dom": ">=17"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/jsdom": "^27.0.0",
     "@types/lodash": "^4.17.20",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
     "grapesjs": "^0.22.12",
     "grapesjs-blocks-basic": "^1.0.2",
     "handlebars": "^4.7.8",
+    "jest": "^30.2.0",
     "lodash": "^4.17.21",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "ts-jest": "^29.4.4",
+    "ts-node": "^10.9.2",
     "tsup": "^8.5.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "jsdom": "^27.0.0"
   }
 }

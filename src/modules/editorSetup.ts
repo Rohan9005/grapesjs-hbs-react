@@ -94,14 +94,12 @@ export const setupBlocks = (editor: any) => {
     content: `<${PLACE_TAG} ${HBS_ATTR}="{{}}" class="hbs-token">{{}}</${PLACE_TAG}>`,
   });
 
-  if (false) {
     blockManager.add('hbs-each', {
       label: 'Each',
       category: 'Logic',
       attributes: { class: "fa fa-list" },
       content: `<${PLACE_TAG} ${HBS_ATTR}="{{#each}}" class="hbs-token">{{#each}}{{/each}}</${PLACE_TAG}>`,
     });
-  }
 };
 
 /**

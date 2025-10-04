@@ -8,6 +8,7 @@ import { PLACE_TAG, HBS_ATTR } from './types';
  * This version preserves {{#each}} and {{#if}} blocks while converting simple variables to tokens
  */
 export const hbsToHtml = (hbs: string, sampleData: any) => {
+  debugger
   try {
     console.log("######################################");
     console.log("HBS to HTML conversion Started");
@@ -31,12 +32,12 @@ export const hbsToHtml = (hbs: string, sampleData: any) => {
     let blockCounter = 0;
 
     // Protect each blocks
-    hbs = hbs.replace(/({{#each\s+[^}]+}}[\s\S]*?{{\/each}})/g, (match) => {
-      const placeholder = `__PROTECTED_BLOCK_${blockCounter}__`;
-      protectedBlocks[blockCounter] = match;
-      blockCounter++;
-      return placeholder;
-    });
+    // hbs = hbs.replace(/({{#each\s+[^}]+}}[\s\S]*?{{\/each}})/g, (match) => {
+    //   const placeholder = `__PROTECTED_BLOCK_${blockCounter}__`;
+    //   protectedBlocks[blockCounter] = match;
+    //   blockCounter++;
+    //   return placeholder;
+    // });
 
     // Protect if blocks
     hbs = hbs.replace(/({{#if\s+[^}]+}}[\s\S]*?{{\/if}})/g, (match) => {
@@ -47,7 +48,14 @@ export const hbsToHtml = (hbs: string, sampleData: any) => {
     });
 
     // Rewrite variables
-    const rewritten = hbs.replace(/{{\s*([a-zA-Z0-9_.]+)\s*}}/g, (_, expr) => {
+    const rewritten = hbs.replace(/{{\s*([a-zA-Z0-9_.@]+)\s*}}/g, (_, expr) => {
+      console.log('Inside rewritten', expr)
+      if (expr === "this") {
+        console.log("Leaving this or @ as is", expr)
+        // leave {{this}}, {{@index}}, {{@key}} as is
+        return `{{${expr}}}`;
+      }
+      console.log("Rewriting variable", expr)
       return `{{lookupVar "${expr}"}}`;
     });
 
@@ -76,7 +84,7 @@ export const hbsToHtml = (hbs: string, sampleData: any) => {
       }
     );
 
-
+    console.log("Result before compile",result);
     const template = hb.compile(result);
     const finalResult = template(sampleData);
     console.log("HBS to HTML conversion Completed");

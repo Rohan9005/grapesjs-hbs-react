@@ -12,6 +12,6 @@
     "resolveJsonModule": true,            // allow importing JSON if needed
     "skipLibCheck": true                  // faster builds, skip type checks for deps
   },
-  "include": ["src"],                     // only include your source
+  "include": ["src","tests"],                     // only include your source
   "exclude": ["node_modules", "dist"]     // don’t include output or deps
 }
