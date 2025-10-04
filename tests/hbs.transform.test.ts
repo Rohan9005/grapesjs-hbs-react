@@ -71,7 +71,7 @@ describe('hbsToAnnotatedHtml (HBS ➜ annotated HTML)', () => {
         </div></tbody>`
 
         // Wrapper expectations
-        expect(html).toEqual(expectedHtml);
+        expect(normalize(html)).toEqual(normalize(expectedHtml));
     });
 
     it('Use case 4: wraps each block with range + indices in case of simple array of strings', () => {

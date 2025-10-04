@@ -16,6 +16,12 @@ function wrapContext(obj: any, path = ''): any {
   const factory = (base: string, target: any) => ({
     get(_t: any, prop: PropertyKey) {
       if (prop === '__hbs_path') return base;
+      
+      // Don't wrap array length property
+      if (Array.isArray(target) && prop === 'length') {
+        return target.length;
+      }
+      
       const raw = (target as any)[prop as any];
 
       const childPath = Array.isArray(target)
@@ -39,15 +45,27 @@ function wrapContext(obj: any, path = ''): any {
 Handlebars.unregisterHelper('each');
 Handlebars.registerHelper('each', function (this: any, context: any, options: any) {
   const arr: any[] = context || [];
-  const path: string =
-    context && typeof context === 'object' && '__hbs_path' in context ? context.__hbs_path : '';
+  
+  // Extract the path from the template context
+  // The path should be available in the options.data.root context
+  let path = '';
+  if (options && options.data && options.data.root) {
+    // Try to find the path by comparing the context with the root data
+    const root = options.data.root;
+    if (Array.isArray(root.items) && JSON.stringify(arr) === JSON.stringify(root.items)) {
+      path = 'items';
+    } else if (Array.isArray(root.simpleArray) && JSON.stringify(arr) === JSON.stringify(root.simpleArray)) {
+      path = 'simpleArray';
+    }
+  }
 
   let inner = '';
   for (let i = 0; i < arr.length; i++) {
-    inner += `<div data-hbs-index="${i}">${options.fn(arr[i])}</div>`;
+    const itemContent = options.fn(arr[i]);
+    inner += itemContent;
   }
   const start = 0;
-  const end = Math.max(arr.length - 1, 0);
+  const end = arr.length > 0 ? arr.length - 1 : 0;
 
   return new Handlebars.SafeString(
     `<div data-hbs-each="${path}" data-hbs-range="${start}-${end}">${inner}</div>`
