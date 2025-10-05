@@ -79,20 +79,82 @@ export function hbsToAnnotatedHtml(hbsTemplate: string, data: unknown): string {
 }
 
 export function annotatedHtmlToHbs(html: string): string {
-  const dom = new JSDOM(`<body>${html}</body>`);
+  let result = html;
+  
+  // Process each blocks first by working directly with the HTML string
+  const eachRegex = /<div[^>]+data-hbs-each="([^"]+)"[^>]*>(.*?)<\/div>/gs;
+  let match;
+  
+  while ((match = eachRegex.exec(result)) !== null) {
+    const path = match[1];
+    let wrapperContent = match[2];
+    
+    // Convert all spans to their expressions
+    wrapperContent = wrapperContent.replace(/<span data-hbs="([^"]+)" class="hbs-token">[^<]*<\/span>/g, (spanMatch, expr) => {
+      // Extract the path from the expression (remove {{ }} if present)
+      const cleanExpr = expr.replace(/^\{\{|\}\}$/g, '');
+      
+      // Convert absolute paths like "items.0.name" to relative paths like "name"
+      const arrayIndexPattern = new RegExp(`^${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\.\\d+\\.(.+)$`);
+      const arrayIndexMatch = cleanExpr.match(arrayIndexPattern);
+      if (arrayIndexMatch) {
+        return `{{${arrayIndexMatch[1]}}}`;
+      }
+      
+      // Handle simple array case - convert "simpleArray.0" to "this"
+      const simpleArrayPattern = new RegExp(`^${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\.\\d+$`);
+      if (simpleArrayPattern.test(cleanExpr)) {
+        return '{{this}}';
+      }
+      
+      return `{{${cleanExpr}}}`;
+    });
+    
+    // Handle spans without data-hbs attributes (for simple arrays)
+    wrapperContent = wrapperContent.replace(/<span class="hbs-token">([^<]*)<\/span>/g, () => {
+      return '{{this}}';
+    });
+    
+    // Extract the template structure from the first item
+    // Look for the first complete block (like <tr>...</tr>)
+    const trMatches = wrapperContent.match(/<tr[^>]*>.*?<\/tr>/gs);
+    if (trMatches && trMatches.length > 0) {
+      // Take only the first <tr> block as the template
+      const templateHTML = trMatches[0];
+      const block = `{{#each ${path}}}\n        ${templateHTML}\n        {{/each}}`;
+      result = result.replace(match[0], block);
+    } else {
+      // Fallback: extract first item by looking for repeated patterns
+      const lines = wrapperContent.split('\n').map(line => line.trim()).filter(line => line);
+      let firstBlockEnd = lines.length;
+      const seenPatterns = new Set<string>();
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const normalizedLine = line.replace(/\{\{[^}]+\}\}/g, '{{VARIABLE}}');
+        
+        if (seenPatterns.has(normalizedLine)) {
+          firstBlockEnd = i;
+          break;
+        }
+        seenPatterns.add(normalizedLine);
+      }
+      
+      const firstBlockLines = lines.slice(0, firstBlockEnd);
+      const templateHTML = firstBlockLines.join('\n        ');
+      const block = `{{#each ${path}}}\n        ${templateHTML}\n        {{/each}}`;
+      result = result.replace(match[0], block);
+    }
+    
+    // Reset regex lastIndex to avoid issues with global regex
+    eachRegex.lastIndex = 0;
+  }
+
+  // Now process remaining token spans using DOM
+  const dom = new JSDOM(`<body>${result}</body>`);
   const doc = dom.window.document;
 
-  // Convert loop wrappers back to {{#each path}} ... {{/each}}
-  doc.querySelectorAll<HTMLElement>('[data-hbs-each]').forEach((wrapper) => {
-    const path = wrapper.getAttribute('data-hbs-each') || '';
-    const parts = Array.from(wrapper.querySelectorAll<HTMLElement>('[data-hbs-index]'))
-      .map((div) => div.innerHTML)
-      .join('');
-    const block = `{{#each ${path}}}${parts}{{/each}}`;
-    wrapper.replaceWith(doc.createTextNode(block));
-  });
-
-  // Convert token spans back to {{...}}
+  // Convert remaining token spans back to {{...}}
   doc.querySelectorAll<HTMLSpanElement>('span.hbs-token').forEach((span) => {
     const expr = span.getAttribute('data-hbs') || '';
     const node = doc.createTextNode(expr.trim());
