@@ -20,3 +20,6 @@ export * from './eventHandlers';
 
 // Export utilities
 export * from './exportUtils';
+
+// HBS Transform utilities
+export * from './hbs-transform';

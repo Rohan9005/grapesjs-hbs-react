@@ -1,5 +1,5 @@
 // tests/hbs-transform.test.ts
-import { hbsToAnnotatedHtml, annotatedHtmlToHbs } from '../src/modules/hbs-transform.v2';
+import { hbsToAnnotatedHtml, annotatedHtmlToHbs } from '../src/modules/hbs-transform';
 
 const normalize = (s: string) => s.replace(/>\s+</g, '><').replace(/\s+/g, ' ').trim();
 
@@ -99,6 +99,29 @@ describe('hbsToAnnotatedHtml (HBS ➜ annotated HTML)', () => {
         // Wrapper expectations
         expect(normalize(html)).toEqual(normalize(expectedHtml));
     });
+
+    it('Each block should be handled with its child structure', () => {
+
+        const hbs = ` {{#each items}} <div class="item">
+        <h3>{{name}}</h3>
+        <p>{{quantity}}</p>
+        </div> {{/each}} `;
+
+        const expectedAnnotatedHtml = `<div data-hbs-each="items" data-hbs-range="0-1">
+        <div class="item">
+        <h3><span data-hbs="{{items.0.name}}" class="hbs-token">Premium Wireless Headphones</span></h3>
+        <p><span data-hbs="{{items.0.quantity}}" class="hbs-token">1</span></p>
+        </div>
+        <div class="item">
+        <h3><span data-hbs="{{items.1.name}}" class="hbs-token">Smartphone Protective Case</span></h3>
+        <p><span data-hbs="{{items.1.quantity}}" class="hbs-token">2</span></p>
+        </div>
+        </div>`;
+        const actualAnnotatedHtml = hbsToAnnotatedHtml(hbs, data);
+        
+
+        expect(normalize(actualAnnotatedHtml)).toEqual(normalize(expectedAnnotatedHtml));
+    });
 });
 
 
@@ -167,5 +190,44 @@ describe('annotatedHtmlToHbs (annotated HTML ➜ HBS)', () => {
         const annotatedHtml = `<div class="company-name"><span data-hbs="{{company.name}}" class="hbs-token">Acme Retail Solutions</span></div>`;
         const hbs = annotatedHtmlToHbs(annotatedHtml);
         expect(normalize(hbs)).toBe(normalize(expectedhbs));
+    });
+
+    it('handles non-table HTML structures generically', () => {
+        const annotatedHtml = `<div data-hbs-each="items" data-hbs-range="0-1">
+        <div class="item">
+        <h3><span data-hbs="{{items.0.name}}" class="hbs-token">Item 1</span></h3>
+        <p><span data-hbs="{{items.0.description}}" class="hbs-token">Description 1</span></p>
+        </div>
+        <div class="item">
+        <h3><span data-hbs="{{items.1.name}}" class="hbs-token">Item 2</span></h3>
+        <p><span data-hbs="{{items.1.description}}" class="hbs-token">Description 2</span></p>
+        </div>
+        </div>`;
+
+        const hbs = annotatedHtmlToHbs(annotatedHtml);
+        const expectedHBS = ` {{#each items}} <div class="item">
+        <h3>{{name}}</h3>
+        <p>{{description}}</p>
+        </div> {{/each}} `;
+
+        expect(normalize(hbs)).toEqual(normalize(expectedHBS));
+    });
+
+    it('handles list structures generically', () => {
+        const annotatedHtml = `<ul data-hbs-each="items" data-hbs-range="0-1">
+        <li class="list-item">
+        <span data-hbs="{{items.0.name}}" class="hbs-token">Item 1</span>
+        </li>
+        <li class="list-item">
+        <span data-hbs="{{items.1.name}}" class="hbs-token">Item 2</span>
+        </li>
+        </ul>`;
+
+        const hbs = annotatedHtmlToHbs(annotatedHtml);
+        const expectedHBS = ` {{#each items}} <li class="list-item">
+        {{name}}
+        </li> {{/each}} `;
+
+        expect(normalize(hbs)).toEqual(normalize(expectedHBS));
     });
 });
