@@ -11,6 +11,22 @@ const data = {
         { name: 'Smartphone Protective Case', quantity: 2, price: '$24.99', amount: '$49.98' },
     ],
     simpleArray: ['Premium Wireless Headphones', 'Smartphone Protective Case'],
+    categories: [
+      {
+        title: "Electronics",
+        items: [
+          { name: "Laptop", price: "$999" },
+          { name: "Headphones", price: "$199" },
+        ],
+      },
+      {
+        title: "Accessories",
+        items: [
+          { name: "Mouse", price: "$49" },
+          { name: "Keyboard", price: "$89" },
+        ],
+      },
+    ],
 };
 
 
@@ -122,6 +138,60 @@ describe('hbsToAnnotatedHtml (HBS ➜ annotated HTML)', () => {
 
         expect(normalize(actualAnnotatedHtml)).toEqual(normalize(expectedAnnotatedHtml));
     });
+
+    it("Use case 6: handles nested #each blocks correctly with absolute paths", () => {
+      const hbs = `
+        <div class="categories">
+          {{#each categories}}
+            <h2>{{title}}</h2>
+            <ul>
+              {{#each items}}
+                <li>{{name}} - {{price}}</li>
+              {{/each}}
+            </ul>
+          {{/each}}
+        </div>
+      `;
+    
+      const html = hbsToAnnotatedHtml(hbs, data);
+    
+      const expectedHtml = `
+        <div class="categories">
+          <div data-hbs-each="categories" data-hbs-range="0-1">
+            <h2><span data-hbs="{{categories.0.title}}" class="hbs-token">Electronics</span></h2>
+            <ul>
+              <div data-hbs-each="categories.0.items" data-hbs-range="0-1">
+                <li>
+                  <span data-hbs="{{categories.0.items.0.name}}" class="hbs-token">Laptop</span> - 
+                  <span data-hbs="{{categories.0.items.0.price}}" class="hbs-token">$999</span>
+                </li>
+                <li>
+                  <span data-hbs="{{categories.0.items.1.name}}" class="hbs-token">Headphones</span> - 
+                  <span data-hbs="{{categories.0.items.1.price}}" class="hbs-token">$199</span>
+                </li>
+              </div>
+            </ul>
+    
+            <h2><span data-hbs="{{categories.1.title}}" class="hbs-token">Accessories</span></h2>
+            <ul>
+              <div data-hbs-each="categories.1.items" data-hbs-range="0-1">
+                <li>
+                  <span data-hbs="{{categories.1.items.0.name}}" class="hbs-token">Mouse</span> - 
+                  <span data-hbs="{{categories.1.items.0.price}}" class="hbs-token">$49</span>
+                </li>
+                <li>
+                  <span data-hbs="{{categories.1.items.1.name}}" class="hbs-token">Keyboard</span> - 
+                  <span data-hbs="{{categories.1.items.1.price}}" class="hbs-token">$89</span>
+                </li>
+              </div>
+            </ul>
+          </div>
+        </div>
+      `;
+    
+      expect(normalize(html)).toEqual(normalize(expectedHtml));
+    });
+    
 });
 
 
@@ -230,4 +300,43 @@ describe('annotatedHtmlToHbs (annotated HTML ➜ HBS)', () => {
 
         expect(normalize(hbs)).toEqual(normalize(expectedHBS));
     });
+
+    it("converts nested each wrappers back to nested {{#each}} blocks correctly", () => {
+      const annotatedHtml = `
+        <div class="categories">
+          <div data-hbs-each="categories" data-hbs-range="0-1">
+            <h2><span data-hbs="{{categories.0.title}}" class="hbs-token">Electronics</span></h2>
+            <ul>
+              <div data-hbs-each="categories.0.items" data-hbs-range="0-1">
+                <li>
+                  <span data-hbs="{{categories.0.items.0.name}}" class="hbs-token">Laptop</span> - 
+                  <span data-hbs="{{categories.0.items.0.price}}" class="hbs-token">$999</span>
+                </li>
+                <li>
+                  <span data-hbs="{{categories.0.items.1.name}}" class="hbs-token">Headphones</span> - 
+                  <span data-hbs="{{categories.0.items.1.price}}" class="hbs-token">$199</span>
+                </li>
+              </div>
+            </ul>
+          </div>
+        </div>
+      `;
+    
+      const expectedHbs = `
+        <div class="categories">
+          {{#each categories}}
+            <h2>{{title}}</h2>
+            <ul>
+              {{#each items}}
+                <li>{{name}} - {{price}}</li>
+              {{/each}}
+            </ul>
+          {{/each}}
+        </div>
+      `;
+    
+      const hbs = annotatedHtmlToHbs(annotatedHtml);
+      expect(normalize(hbs)).toEqual(normalize(expectedHbs));
+    });
+    
 });
