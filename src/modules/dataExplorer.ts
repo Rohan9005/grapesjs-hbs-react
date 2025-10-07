@@ -77,6 +77,9 @@ export const openExplorerModal = (opts: ExplorerModalOptions) => {
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:8px">
       <div id="gjs-preview" style="font-size:12px;color:#111827"></div>
       <div style="display:flex;gap:8px">
+        ${mode === 'each' ? `
+          <input id="gjs-from" type="number" placeholder="from" style="width:90px;padding:6px;border:1px solid #e5e7eb;border-radius:8px" />
+          <input id="gjs-to" type="number" placeholder="to" style="width:90px;padding:6px;border:1px solid #e5e7eb;border-radius:8px" />` : ''}
         <button id="gjs-modal-cancel" style="padding:6px 12px;border-radius:8px;border:1px solid #d1d5db;background:#fff">Cancel</button>
         <button id="gjs-modal-ok" style="padding:6px 12px;border-radius:8px;border:0;background:#0b74de;color:#fff">OK</button>
       </div>
@@ -142,13 +145,13 @@ export const openExplorerModal = (opts: ExplorerModalOptions) => {
     const kind = card.getAttribute('data-kind')!;
     const val = getValueFromPath(root, path);
 
-    if (kind === 'object' || (kind === 'array' && mode !== 'each')) {
+    if (kind === 'object' || kind === 'array') {
       // Navigate into object/array
       currentPath = path;
       currentNode = val;
       selectedPath = null; // Clear selection
       selectedKind = '';
-
+      
       // Update UI without re-attaching handlers
       renderBreadcrumb();
       renderExplorer();
@@ -157,7 +160,7 @@ export const openExplorerModal = (opts: ExplorerModalOptions) => {
       // Select a value
       selectedPath = path;
       selectedKind = kind;
-
+      
       // Update UI and highlight selection
       updatePreview();
       document.querySelectorAll<HTMLElement>('.gjs-card').forEach((el) => (el.style.outline = ''));
@@ -174,7 +177,7 @@ export const openExplorerModal = (opts: ExplorerModalOptions) => {
     currentNode = jump ? getValueFromPath(root, jump) : root;
     selectedPath = null;
     selectedKind = '';
-
+    
     // Update UI without re-attaching handlers
     renderBreadcrumb();
     renderExplorer();
@@ -191,7 +194,14 @@ export const openExplorerModal = (opts: ExplorerModalOptions) => {
       return;
     }
     const preview = compilePathPreview(selectedPath, root);
-    onConfirm(selectedPath, { preview, selectedKind });
+    const range: { from?: number; to?: number } = {};
+    if (mode === 'each') {
+      const fromEl = document.getElementById('gjs-from') as HTMLInputElement | null;
+      const toEl = document.getElementById('gjs-to') as HTMLInputElement | null;
+      if (fromEl?.value) range.from = Number(fromEl.value);
+      if (toEl?.value) range.to = Number(toEl.value);
+    }
+    onConfirm(selectedPath, { preview, selectedKind: selectedKind, range: Object.keys(range).length ? range : undefined });
     editor.Modal.close();
   };
 
@@ -213,7 +223,7 @@ export const openExplorerModal = (opts: ExplorerModalOptions) => {
     // Wire event delegation (only once)
     const explorer = document.getElementById('gjs-explorer');
     const breadcrumb = document.getElementById('gjs-breadcrumb');
-
+    
     if (explorer) {
       explorer.addEventListener('click', handleCardClick);
     }

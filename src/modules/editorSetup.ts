@@ -1,7 +1,7 @@
 // editorSetup.ts - GrapesJS editor setup and configuration
 
 import { PLACE_TAG, HBS_ATTR } from './types';
-import { escapeHtml, setComponentText, getValueFromPath } from './utils';
+import { setComponentText } from './utils';
 import { openExplorerModal } from './dataExplorer';
 
 /**
